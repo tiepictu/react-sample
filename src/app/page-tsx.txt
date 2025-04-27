@@ -1,0 +1,154 @@
+"use client";
+
+import React from 'react';
+import { BrowserRouter as Router, Route, Routes, Link, useParams } from 'react-router-dom';
+import { Table } from 'antd';
+import axios from 'axios';
+
+const NoteScreen = () => {
+  const [notes, setNotes] = React.useState([]);
+
+  React.useEffect(() => {
+    axios.get('http://localhost:5000/api/notes').then((response) => {
+      setNotes(response.data);
+    });
+  }, []);
+
+  const columns = [
+    {
+      title: 'Title',
+      dataIndex: 'title',
+      key: 'title',
+    },
+    {
+      title: 'Content',
+      dataIndex: 'content',
+      key: 'content',
+    },
+    {
+      title: 'Created At',
+      dataIndex: 'created_at',
+      key: 'created_at',
+    },
+    {
+      title: 'Updated At',
+      dataIndex: 'updated_at',
+      key: 'updated_at',
+    },
+  ];
+
+  return <Table dataSource={notes} columns={columns} rowKey="id" />;
+};
+
+const AboutScreen = () => (
+  <div>
+    <h1>About MyNote</h1>
+    <p>Company Name: MyNote Inc.</p>
+    <p>Address: 123 Note Street</p>
+    <p>Phone: +123456789</p>
+    <p>Email: contact@mynote.com</p>
+  </div>
+);
+
+const CreateNoteScreen = () => {
+  const [title, setTitle] = React.useState('');
+  const [content, setContent] = React.useState('');
+
+  const handleSubmit = () => {
+    axios.post('http://localhost:5000/api/notes', { title, content }).then(() => {
+      alert('Note created successfully!');
+    });
+  };
+
+  return (
+    <div>
+      <h1>Create Note</h1>
+      <input
+        type="text"
+        placeholder="Title"
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+      />
+      <textarea
+        placeholder="Content"
+        value={content}
+        onChange={(e) => setContent(e.target.value)}
+      />
+      <button onClick={handleSubmit}>Create</button>
+    </div>
+  );
+};
+
+interface UpdateNoteScreenProps {
+  id: string;
+}
+
+const UpdateNoteScreen = ({ id }: UpdateNoteScreenProps) => {
+  const [title, setTitle] = React.useState('');
+  const [content, setContent] = React.useState('');
+
+  React.useEffect(() => {
+    axios.get(`http://localhost:5000/api/notes/${id}`).then((response) => {
+      setTitle(response.data.title);
+      setContent(response.data.content);
+    });
+  }, [id]);
+
+  const handleUpdate = () => {
+    axios.put(`http://localhost:5000/api/notes/${id}`, { title, content }).then(() => {
+      alert('Note updated successfully!');
+    });
+  };
+
+  return (
+    <div>
+      <h1>Update Note</h1>
+      <input
+        type="text"
+        placeholder="Title"
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+      />
+      <textarea
+        placeholder="Content"
+        value={content}
+        onChange={(e) => setContent(e.target.value)}
+      />
+      <button onClick={handleUpdate}>Update</button>
+    </div>
+  );
+};
+
+const UpdateNoteScreenWrapper = () => {
+  const { id } = useParams<{ id: string }>();
+  if (!id) return <div>Invalid note ID</div>;
+  return <UpdateNoteScreen id={id} />;
+};
+
+const App = () => (
+  <Router>
+    <div>
+      <nav>
+        <ul>
+          <li>
+            <Link to="/">Note</Link>
+          </li>
+          <li>
+            <Link to="/about">About</Link>
+          </li>
+          <li>
+            <Link to="/create">Create Note</Link> {/* New menu item */}
+          </li>
+        </ul>
+      </nav>
+      <Routes>
+        <Route path="/" element={<NoteScreen />} />
+        <Route path="/about" element={<AboutScreen />} />
+        <Route path="/create" element={<CreateNoteScreen />} />
+        <Route path="/update/:id" element={<UpdateNoteScreenWrapper />} />
+      </Routes>
+    </div>
+  </Router>
+);
+
+export default App;
